@@ -3729,8 +3729,13 @@ static void gen_st_cond(DisasContext *ctx, int rt, int base, int offset,
     /* generate cmpxchg */
     val = tcg_temp_new();
     gen_load_gpr(val, rt);
+    /*
+     * Note: We have to clear MO_SIGN for the cmpxchg since llval is loaded
+     * with a zero-extending load and not a sign-extending one.
+     */
     tcg_gen_atomic_cmpxchg_tl(t0, cpu_lladdr, cpu_llval, val,
-                              eva ? MIPS_HFLAG_UM : ctx->mem_idx, tcg_mo);
+                              eva ? MIPS_HFLAG_UM : ctx->mem_idx,
+			      tcg_mo & ~MO_SIGN);
     tcg_gen_setcond_tl(TCG_COND_EQ, t0, t0, cpu_llval);
     gen_store_gpr(t0, rt);
     tcg_temp_free(val);
